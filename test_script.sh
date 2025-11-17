@@ -23,7 +23,7 @@ else
     # Start background reader for 3 seconds
     echo "Starting serial read (3 seconds)..."
     {
-        timeout 3 cat "$DEVICE" | while IFS= read -r line; do
+        timeout 10 cat "$DEVICE" | while IFS= read -r line; do
             size=${#line}
             echo "Recv (${size} bytes): $line"
         done
