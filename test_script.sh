@@ -22,7 +22,7 @@ else
 
 
 # Loop 10 times
-for i in $(seq 1 10); do
+for i in $(seq 1 5); do
     echo
     echo "--- Iteration $i ---"
 
