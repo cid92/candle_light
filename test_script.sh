@@ -20,10 +20,15 @@ else
     echo "Configuring $DEVICE at ${BAUD} baud..."
     stty -F "$DEVICE" $BAUD cs8 -cstopb -parenb -echo -icanon raw || exit 1
 
-    # Start background reader for 3 seconds
-    echo "Starting serial read (3 seconds)..."
+
+# Loop 10 times
+for i in $(seq 1 10); do
+    echo
+    echo "--- Iteration $i ---"
+
+    # Start background reader for 2 seconds
     {
-        timeout 10 cat "$DEVICE" | while IFS= read -r line; do
+        timeout 2 cat "$DEVICE" | while IFS= read -r line; do
             size=${#line}
             echo "Recv (${size} bytes): $line"
         done
@@ -37,7 +42,11 @@ else
     echo "$MESSAGE" > "$DEVICE"
 
     wait $READER_PID
-    echo "Serial loopback test done."
+    echo "Iteration $i complete."
+done
+
+echo
+echo "=== USB LOOPBACK TESTS DONE ==="
 fi
 
 echo
