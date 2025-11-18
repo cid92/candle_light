@@ -1,30 +1,32 @@
 #!/bin/bash
 #
-# unified_loopback_test.sh — Serial + CAN loopback test
+# unified_loopback_test.sh — USB serial loopback (/dev/ttyUSB3), ACM0 printout, and CAN receive test
 #
 
 DEVICE="/dev/ttyUSB3"
 BAUD=115200
-MESSAGE="HELLO LOOPBACK"
 
-echo "=== USB SERIAL LOOPBACK TEST ==="
+echo "=== Listing USB devices... ==="
+lsusb
+echo
 
+echo "=== USB SERIAL LOOPBACK TEST (5 iterations) ==="
 # Check if the device exists
 if [ ! -e "$DEVICE" ]; then
     echo "Error: $DEVICE not found."
-else
-    echo "Listing USB devices..."
-    lsusb
-    echo
+    exit 1
+fi
 
-    echo "Configuring $DEVICE at ${BAUD} baud..."
-    stty -F "$DEVICE" $BAUD cs8 -cstopb -parenb -echo -icanon raw || exit 1
+echo "Configuring $DEVICE at ${BAUD} baud..."
+stty -F "$DEVICE" $BAUD cs8 -cstopb -parenb -echo -icanon raw || exit 1
 
-
-# Loop 10 times
+# Loop 5 times
 for i in $(seq 1 5); do
     echo
     echo "--- Iteration $i ---"
+
+    # Build dynamic message with timestamp
+    MESSAGE="Loop test $(date)"
 
     # Start background reader for 2 seconds
     {
@@ -46,11 +48,19 @@ for i in $(seq 1 5); do
 done
 
 echo
-echo "=== USB LOOPBACK TESTS DONE ==="
+echo "=== Testing F9R Output (/dev/ttyACM0 for 3 seconds) ==="
+
+if [ -e "/dev/ttyACM0" ]; then
+    timeout 3 cat /dev/ttyACM0 | while IFS= read -r line; do
+        size=${#line}
+        echo "ACM0 (${size} bytes): $line"
+    done
+else
+    echo "Error: /dev/ttyACM0 not found."
 fi
 
 echo
-echo "=== CAN RECEIVE TEST ==="
+echo "=== CAN RECEIVE TEST (can0 + can1 for 3 seconds) ==="
 
 # Configure CAN interfaces
 echo "Configuring CAN interfaces..."
@@ -77,3 +87,5 @@ wait $PID0 $PID1 2>/dev/null
 echo "CAN receive-only test done."
 echo
 echo "=== ALL TESTS COMPLETE ==="
+
+
