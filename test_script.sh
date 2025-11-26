@@ -14,9 +14,12 @@ echo "=== USB SERIAL LOOPBACK TEST (5 iterations) ==="
 # Check if the device exists
 if [ ! -e "$DEVICE" ]; then
     echo "Error: $DEVICE not found."
-    exit 1
+    DEVICE="/dev/ttyUSB0"
 fi
-
+if [ ! -e "$DEVICE" ]; then
+    echo "Error: $DEVICE not found."
+    exit
+fi
 echo "Configuring $DEVICE at ${BAUD} baud..."
 stty -F "$DEVICE" $BAUD cs8 -cstopb -parenb -echo -icanon raw || exit 1
 
