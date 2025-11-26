@@ -31,9 +31,10 @@ for i in $(seq 1 5); do
     # Build dynamic message with timestamp
     MESSAGE="Loop test $(date)"
 
-    # Start background reader for 2 seconds
+    # Start background reader for 2 seconds (unbuffered)
     {
-        timeout 2 cat "$DEVICE" | while IFS= read -r line; do
+        timeout 2 stdbuf -o0 cat "$DEVICE" |
+        while IFS= read -r line; do
             size=${#line}
             echo "Recv (${size} bytes): $line"
         done
