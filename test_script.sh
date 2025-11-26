@@ -44,7 +44,7 @@ for i in $(seq 1 5); do
 
     # Send test message
     echo "Sending: $MESSAGE"
-    echo "$MESSAGE" > "$DEVICE"
+    printf "%s\n" "$MESSAGE" > "$DEVICE"
 
     wait $READER_PID
     echo "Iteration $i complete."
