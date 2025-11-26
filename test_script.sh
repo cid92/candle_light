@@ -23,32 +23,41 @@ fi
 echo "Configuring $DEVICE at ${BAUD} baud..."
 stty -F "$DEVICE" $BAUD cs8 -cstopb -parenb -echo -icanon raw || exit 1
 
-# Loop 5 times
 for i in $(seq 1 5); do
     echo
     echo "--- Iteration $i ---"
 
-    # Build dynamic message with timestamp
-    MESSAGE="Loop test $(date)"
+    TX="Loop test $(date)"
 
-    # Start background reader for 2 seconds (unbuffered)
+    # Background receiver – reads characters for 2 seconds
+    RECEIVED=""
     {
-        timeout 2 stdbuf -o0 cat "$DEVICE" |
-        while IFS= read -r line; do
-            size=${#line}
-            echo "Recv (${size} bytes): $line"
+        timeout 2 dd if="$DEVICE" bs=1 status=none |
+        while IFS= read -r -n1 ch; do
+            RECEIVED+="$ch"
         done
+        echo "$RECEIVED" > /tmp/loopback_recv_$i
     } &
     READER_PID=$!
 
-    sleep 0.5
+    sleep 0.3
 
-    # Send test message
-    echo "Sending: $MESSAGE"
-    printf "%s\n" "$MESSAGE" > "$DEVICE"
+    # Transmit
+    echo "Sending: $TX"
+    printf "%s" "$TX" > "$DEVICE"
 
     wait $READER_PID
-    echo "Iteration $i complete."
+
+    RX=$(cat /tmp/loopback_recv_$i)
+
+    echo "Received: $RX"
+    echo "TX length: ${#TX}, RX length: ${#RX}"
+
+    if [[ "$TX" == "$RX" ]]; then
+        echo "RESULT: ✓ MATCH"
+    else
+        echo "RESULT: ✗ MISMATCH"
+    fi
 done
 
 echo
